@@ -1,0 +1,32 @@
+<mvc:View controllerName="hodek.grnscan.controller.View1"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns="sap.m"   xmlns:core="sap.ui.core"
+    xmlns:f="sap.ui.layout.form">
+
+    <Page id="page" title="Scan Goods Receipt" class="fullPageBackground"
+      showFooter="true" titleAlignment="Auto"
+      showNavButton="false" navButtonPress="onNavBack">
+
+    <HBox width="100%" justifyContent="Center" alignItems="Center" height="90%">
+        <VBox class="formContainer" justifyContent="Center" alignItems="Center" width="31rem">
+
+            <!-- Label + Input aligned left -->
+            <VBox alignItems="Start" justifyContent="Center">
+                <Label text="Enter ASN Number:" design="Bold"
+                       labelFor="idAsnInput" class="formLabel"/>
+                <SearchField id="idGRN" value=""  
+                             placeholder="Scan or Type ASN.."
+                             search="handleGenerate" width="28rem"
+                             liveChange="handleGenerate" class="searchDesign"/>
+            </VBox>
+
+            <!-- Button centered -->
+            <HBox justifyContent="Center" width="100%" class="sapUiTinyMarginTop">
+                <Button id="idButtonGo" text="Go" type="Emphasized" press="handleGenerate" width="10rem" class="formButton"/>
+            </HBox>
+
+        </VBox>
+    </HBox>
+</Page>
+
+</mvc:View>

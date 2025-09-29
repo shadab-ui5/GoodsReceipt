@@ -1,0 +1,264 @@
+<mvc:View controllerName="hodek.grnscan.controller.second"
+  xmlns:mvc="sap.ui.core.mvc"
+  xmlns:fb="sap.ui.comp.filterbar"
+  xmlns:core="sap.ui.core"
+  xmlns:u="sap.ui.unified"
+  xmlns="sap.m"
+  xmlns:f="sap.f"
+  xmlns:upload="sap.m.upload"
+  xmlns:svm="sap.ui.comp.smartvariants">
+  <Page id="second" enableScrolling="false" title="Scan Goods Receipt" class="MainPage" showHeader="true" showNavButton="true" navButtonPress="onNavBack">
+    <f:DynamicPage id="seconddyn" stickySubheaderProvider="iconTabBar" headerExpanded="{/headerExpanded}" showFooter="true" fitContent="true">
+      <f:title>
+        <f:DynamicPageTitle id="_IDGenDynamicPageTitle2">
+          <f:actions>
+            <Button text="Scan" id="Scan" press="onSave" type="Emphasized" icon="sap-icon://save" visible="{= ${ObjectModel>/savebtn} }"/>
+
+            <Button text="Cancel GRN" id="cancelGrn" press="onCancelPress" type="Reject" icon="sap-icon://delete" visible="{= !${ObjectModel>/savebtn} }"/>
+
+          </f:actions>
+          <f:heading>
+            <Title id="_IDGenTitle1" class="labelDesin" text="{ObjectModel>/object/asn}"/>
+          </f:heading>
+          <f:expandedContent>
+            <HBox id="_IDGenHBox4" width="100%" justifyContent="SpaceBetween">
+              <!-- <Label id="_IDGenLabel14" class="textDesin" text="{ObjectModel>/object/asn}"/> -->
+            </HBox>
+          </f:expandedContent>
+          <f:snappedContent>
+            <!-- <Label id="_IDGenLabel22" class="textDesin" text="{ObjectModel>/object/asn}"/> -->
+
+          </f:snappedContent>
+        </f:DynamicPageTitle>
+      </f:title>
+      <f:header>
+        <f:DynamicPageHeader id="_IDGenDynamicPageHeader2">
+          <f:content>
+            <HBox id="_IDGenHBox">
+              <VBox id="VBox5" width="75%">
+                <Label id="_IDGenLabel4" text="Supplier:" class="labelDesin" design="Bold"/>
+                <Text id="Supplier" class="textDesin" width="75%" emptyIndicatorMode="Auto"/>
+              </VBox>
+              <VBox id="VBox11" width="75%">
+                <Label id="_IDGenLabel10" text="Plant:" class="labelDesin" design="Bold"/>
+                <Text id="Plant" class="textDesin" width="75%" emptyIndicatorMode="Auto"/>
+              </VBox>
+            </HBox>
+
+
+          </f:content>
+        </f:DynamicPageHeader>
+      </f:header>
+      <f:content >
+        <VBox id="_IDGenVBox14">
+          <Panel id="_IDGenPanel1" class="sapUiSmallMarginBottom">
+            <headerToolbar>
+              <OverflowToolbar id="_IDGenOverflowToolbar">
+                <Title id="_IDGenTitle2" text="ASN Details"/>
+              </OverflowToolbar>
+            </headerToolbar>
+            <content>  
+              <HBox id="HBox1">
+                <VBox id="VBox1" width="20%">
+                  <Label id="_IDGenLabel" text="PO Number" design="Bold"/>
+                  <Text id="PONumber" width="75%" emptyIndicatorMode="Auto"/>
+                </VBox>
+                <VBox id="VBox20" width="20%">
+                  <Label id="_IDGenLabel19" text="Delivery Note" design="Bold"/>
+                  <Text id="invoiceNo" width="75%" emptyIndicatorMode="Auto"/>
+                </VBox>
+                <VBox id="VBox2" width="20%" visible="false">
+                  <Label id="_IDGenLabel1" text="Gate Entry ID" design="Bold"/>
+                  <Text id="GateEntryID" width="75%" emptyIndicatorMode="Auto"/>
+                </VBox>
+                <VBox id="VBox8" width="20%">
+                  <Label id="_IDGenLabel7" text="Transporter" design="Bold"/>
+                  <Text id="Transporter" width="75%" emptyIndicatorMode="Auto"/>
+                </VBox>
+                <VBox id="VBox7" width="20%">
+                  <Label id="_IDGenLabel6" text="Vehicle Number" design="Bold"/>
+                  <Text id="VehicleNo" width="75%" emptyIndicatorMode="Auto"/>
+                </VBox>
+
+                <VBox id="VBox3" width="20%">
+                  <Label id="_IDGenLabel2" text="Document Date" design="Bold"/>
+                  <Text id="InvoiceDate" width="75%" emptyIndicatorMode="Auto"/>
+                </VBox>
+
+
+              </HBox>
+
+              <HBox id="HBox2" class="sapUiTinyMarginTop">
+                <VBox id="VBox4" width="20%">
+                  <Label id="_IDGenLabel3" text="Posting Date" design="Bold"/>
+                  <Text id="PostingDate" width="75%" emptyIndicatorMode="Auto"/>
+                </VBox>
+                <VBox id="VBox6" width="20%" visible="false">
+                  <Label id="_IDGenLabel5" text="Supplier Name" design="Bold"/>
+                  <Text id="SupplierName" width="75%" emptyIndicatorMode="Auto"/>
+                </VBox>
+
+                <VBox id="VBox9" width="20%">
+                  <Label id="_IDGenLabel8" text="E-Way Bill Number" design="Bold"/>
+                  <Text id="EwayBillNo" width="75%" emptyIndicatorMode="Auto"/>
+                </VBox>
+                <VBox id="VBox10" width="20%">
+                  <Label id="_IDGenLabel9" text="E-Way Bill Date" design="Bold"/>
+                  <Text id="EWayBillDate" width="75%" emptyIndicatorMode="Auto"/>
+                </VBox>
+                <VBox id="VBox14" width="20%">
+                  <Label id="_IDGenLabel13" text="Delivery Challan No" design="Bold"/>
+                  <Text id="DelChallNo" width="75%" emptyIndicatorMode="Auto"/>
+                </VBox>
+                <VBox id="VBox15" width="20%">
+                  <Label id="_IDGenLabel14" text="Delivery Challan Date" design="Bold"/>
+                  <Text id="DelChallDate" width="75%" emptyIndicatorMode="Auto"/>
+                </VBox>
+
+              </HBox>
+
+              <HBox id="HBox3" class="sapUiTinyMarginTop">
+
+                <VBox id="VBox12" width="20%" visible="false">
+                  <Label id="_IDGenLabel11" text="Goods Movement Type" design="Bold"/>
+                  <Text id="GRGoodReceipt" width="75%" emptyIndicatorMode="Auto"/>
+                </VBox>
+                <VBox id="VBox13" width="20%" visible="false">
+                  <Label id="_IDGenLabel12" text="Bill Of Lading" design="Bold"/>
+                  <Text id="BillOfLeading" width="75%" emptyIndicatorMode="Auto"/>
+                </VBox>
+                <VBox id="VBox16" width="20%">
+                  <Label id="_IDGenLabel15" text="LR Number" design="Bold"/>
+                  <Text id="LRNumber" width="75%" emptyIndicatorMode="Auto"/>
+                </VBox>
+                <VBox id="VBox17" width="20%">
+                  <Label id="_IDGenLabel16" text="LR Date" design="Bold"/>
+                  <Text id="LRDate" width="75%" />
+                </VBox>
+                <VBox id="VBox23" width="20%">
+                  <Label id="_IDGenLabel23" text="Material Document Number" design="Bold"/>
+                  <Text id="Materialdocno" width="75%" emptyIndicatorMode="Auto"/>
+                </VBox>
+              </HBox>
+
+              <HBox id="HBox4" class="sapUiTinyMarginTop">
+
+                <VBox id="VBox18" width="20%" visible="false">
+                  <Label id="_IDGenLabel17" text="Inward Type" design="Bold"/>
+                  <Text id="InwardType" width="75%" emptyIndicatorMode="Auto"/>
+                </VBox>
+                <VBox id="VBox19" width="20%" visible="false">
+                  <Label id="_IDGenLabel18" text="Type Of Posting" design="Bold"/>
+                  <Text id="TypeOfPosting" width="75%" emptyIndicatorMode="Auto"/>
+                </VBox>
+
+              </HBox>
+
+              <HBox id="HBox5" class="sapUiTinyMarginTop">
+                <VBox id="VBox21" width="20%" visible="false">
+                  <Label id="_IDGenLabel20" text="GI/GR Slip No." design="Bold"/>
+                  <Text id="GIGRSlipNo" width="75%" emptyIndicatorMode="Auto"/>
+                </VBox>
+                <VBox id="VBox22" width="20%" visible="false">
+                  <Label id="_IDGenLabel21" text="Header Text" design="Bold"/>
+                  <Input id="HeaderText" placeholder="Enter Header Text" width="75%" visible="false"/>
+                </VBox>
+                
+              </HBox>
+            </content>
+          </Panel>
+          <Table id="FirstTable" items="{path: 'oDataModel>/aTableData'}" alternateRowColors="true" sticky="ColumnHeaders,HeaderToolbar">
+
+            <!-- Header Toolbar -->
+            <headerToolbar>
+              <OverflowToolbar id="Table_OverflowToolbar">
+                <Title id="_IDGenTitle" text="Items" level="H2"/>
+                <ToolbarSpacer id="Table_ToolbarSpacer"/>
+              </OverflowToolbar>
+            </headerToolbar>
+
+            <!-- No Data -->
+            <noData>
+              <IllustratedMessage id="_IDGenIllustratedMessage" illustrationSize="Auto" title="No Data Found!!" ariaTitleLevel="H5" enableFormattedText="true" description=""/>
+            </noData>
+
+            <!-- Columns -->
+            <columns>
+              <Column id="_IDGenColumn" width="8%" visible="false">
+                <Text id="_IDGenText" text="ASN" emptyIndicatorMode="Auto"/>
+              </Column>
+              <Column id="_IDGenColumn1" width="10%" visible="false">
+                <Text id="_IDGenText1" text="PO Number" emptyIndicatorMode="Auto"/>
+              </Column>
+              <Column id="_IDGenColumn2" width="7%">
+                <Text id="_IDGenText2" text="Item No." emptyIndicatorMode="Auto"/>
+              </Column>
+              <Column id="_IDGenColumn3" width="20%">
+                <Text id="_IDGenText3" text="Material" emptyIndicatorMode="Auto"/>
+              </Column>
+              <Column id="_IDGenColumn6">
+                <Text id="_IDGenText6" text="Movement Type" emptyIndicatorMode="Auto"/>
+              </Column>
+              <Column id="_IDGenColumn7">
+                <Text id="_IDGenText7" text="Posted Quantity" emptyIndicatorMode="Auto"/>
+              </Column>
+              <Column id="_IDGenColumn8">
+                <Text id="_IDGenText8" text="Storage Location" emptyIndicatorMode="Auto"/>
+              </Column>
+              <Column id="_IDGenColumn9">
+                <Text id="_IDGenText9" text="Quantity" emptyIndicatorMode="Auto"/>
+              </Column>
+              <Column id="_IDGenColumn13" width="7%">
+                <Text id="_IDGenText13" text="UOM" emptyIndicatorMode="Auto"/>
+              </Column>
+              <Column id="_IDGenColumn10" visible="false">
+                <Text id="_IDGenText10" text="Item Category" emptyIndicatorMode="Auto"/>
+              </Column>
+              <Column id="_IDGenColumn11" width="7%">
+                <Text id="_IDGenText11" text="Batch" emptyIndicatorMode="Auto"/>
+              </Column>
+              <Column id="_IDGenColumn12" width="7%">
+                <Text id="_IDGenText12" text="Batch Qty" emptyIndicatorMode="Auto"/>
+              </Column>
+            </columns>
+
+            <!-- Items / Rows -->
+            <items>
+              <ColumnListItem id="_IDGenColumnListItem">
+                <cells>
+                  <Input id="_IDGenInput" type="Text" maxLength="40" editable="false" value="{oDataModel>GateEntryID}" />
+                  <Input id="_IDGenInput1" type="Text" maxLength="40" editable="false" value="{oDataModel>PONumber}" />
+                  <Input id="_IDGenInput2" type="Text" maxLength="40" editable="false" value="{oDataModel>ItemNo}" />
+                  <Input id="_IDGenInput3" type="Text" maxLength="40" editable="false" value="{oDataModel>MaterialDesc}({oDataModel>Material})" />
+
+                  <Input id="_IDGenInput6" type="Text" maxLength="40" editable="false" value="{oDataModel>MovementType}" />
+                  <Input id="idQuantity" type="Text" maxLength="40" editable="false" value="{oDataModel>PostedQuantity} {oDataModel>UOM}"/>
+
+                  <!-- Storage Location with Value Help -->
+                  <Input id="_IDGenInput8" value="{oDataModel>StorageLocation}" showValueHelp="true" editable="{= ${ObjectModel>/savebtn} }" valueLiveUpdate="true" valueHelpRequest=".onValueHelpRequestStorageLocation"/>
+
+                  <Input id="idEnteredQty" type="Text" maxLength="40" editable="{= ${ObjectModel>/savebtn} }" value="{oDataModel>Entered}" liveChange=".onPostedQtyChange"/>
+                  <Text id="_IDGenText5" text="{oDataModel>UOM}"/>
+                  <Input id="_IDGenInput10" type="Text" maxLength="40" editable="false" value="{oDataModel>ItemCategory}" />
+
+                  <!-- Batch with editable logic -->
+                  <Input id="_IDGenInput11" showValueHelp="true" type="Text" valueHelpRequest="onBatchalueHelpRequest" maxLength="40" editable="{= ${oDataModel>Plant} === '1400' &amp;&amp; ${oDataModel>MovementType} === '543' }" value="{oDataModel>Batch}"/>
+
+                  <Input id="_IDGenInput12" type="Text" maxLength="40" editable="{= ${oDataModel>Plant} === '1400' &amp;&amp; ${oDataModel>MovementType} === '543' }" value="{oDataModel>BatchQty}"/>
+                </cells>
+              </ColumnListItem>
+            </items>
+          </Table>
+
+          <SelectDialog multiSelect="true" contentWidth="50%" contentHeight="50%" id="idBatchSelectDialog" noDataText="No Batchs Found" title="Select Batchs" search=".onBatchSelectDialogSearch" confirm=".onBatchSelectDialogConfirm" cancel=".onBatchSelectDialogConfirm" items="{path: '/BATCHF4'}">
+            <StandardListItem id="idBatchStandardListItem" title="{Batch}" info="" type="Active" />
+          </SelectDialog>
+        </VBox>
+
+
+
+
+      </f:content>
+    </f:DynamicPage>
+  </Page>
+</mvc:View>

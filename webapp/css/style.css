@@ -1,0 +1,75 @@
+/* Enter your custom styles here */
+.customBackgroundColor34 {
+    background-image: url('grng1.jpg');
+    background-size: 100%;
+    background-color: white;
+    background-repeat: no-repeat;
+    background-position: center bottom;
+    /* Aligns image to the bottom */
+}
+
+.fullPageBackground {
+    background-image: url("bg.jpg");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    height: 100%;
+}
+.fullPageBackground .sapMPageHeader .sapMBar .sapMTitle { 
+    font-weight: 600;
+    margin-left: 1rem !important;
+}
+
+.formContainer {
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.379);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgb(62, 71, 140);
+    border-radius: 10px;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+}
+
+.formLabel {
+    color: rgb(9, 9, 9);
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+.formButton .sapMBtnInner {
+    height: 2rem;
+    min-width: 10rem;
+    align-items: center;
+    font-size: 1.2rem;
+}
+
+.searchDesign .sapMSFF {
+    height: 2.5rem !important;
+    /* taller input */
+    padding-left: 1rem !important;
+    /* proper left padding */
+    font-size: 1.2rem !important;
+    /* optional: make text slightly bigger */
+    border-radius: 10px;
+    border: none !important;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);     
+    /* smoother edges */
+}
+.searchDesign .sapMSFB {
+    line-height: 2.25rem !important;
+    font-size: 1.2rem;
+    margin-right: 0.5rem;
+}
+
+.searchDesign .sapMSFI[type='search'] {
+    font-size: 1.2rem !important;
+}
+
+.labelDesin {
+    font-size: 1.4rem !important;
+}
+.textDesin {
+    font-size: 1.3rem !important;
+    font-weight: 500;
+}

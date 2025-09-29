@@ -1,0 +1,16 @@
+<core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core">
+    <SelectDialog
+        id="selectDialog13"
+        title="Select Storage Location"
+        items="{/StorageLocation_F4}"
+        search=".onValueHelpSearch13"
+        confirm=".onValueHelpClose13"
+        cancel=".onValueHelpClose13">
+        <StandardListItem
+            icon=""
+            iconDensityAware="false"
+            iconInset="false"
+            title="{StorageLocation}" 
+            description="{StorageLocation}" />
+    </SelectDialog>
+</core:FragmentDefinition>

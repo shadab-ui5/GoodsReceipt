@@ -1,0 +1,16 @@
+<core:FragmentDefinition xmlns="sap.m" xmlns:core="sap.ui.core">
+    <SelectDialog
+        id="selectDialog413"
+        title="Select Batch"
+        items="{/BATCHF4}"  
+        search=".onValueHelpSearch131"
+        confirm=".onValueHelpClose131"
+        cancel=".onValueHelpClose131">
+        <StandardListItem
+            icon=""
+            iconDensityAware="false"
+            iconInset="false"
+            title="{Batch}" 
+            description="{Batch}" />
+    </SelectDialog>
+</core:FragmentDefinition>

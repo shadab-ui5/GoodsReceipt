@@ -1,0 +1,23 @@
+specVersion: "3.1"
+metadata:
+  name: hodek.grnscan
+type: application
+builder:
+  resources:
+    excludes:
+      - /test/**
+      - /localService/**
+  customTasks:
+    - name: deploy-to-abap
+      afterTask: generateCachebusterInfo
+      configuration:
+        target:
+          destination: CONNECT_DEV080
+          url: https://my426294.s4hana.cloud.sap
+          authenticationType: reentranceTicket
+        app:
+          name: ZGRNSCAN
+          package: ZMM_VENDOR_PORTAL
+          transport: TMOK900554
+        exclude:
+          - /test/
