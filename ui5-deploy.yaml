@@ -18,6 +18,6 @@ builder:
         app:
           name: ZGRNSCAN
           package: ZMM_VENDOR_PORTAL
-          transport: TMOK900554
+          transport: TMOK900751
         exclude:
           - /test/

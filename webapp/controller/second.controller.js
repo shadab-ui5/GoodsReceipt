@@ -61,14 +61,11 @@ sap.ui.define([
             if (oTableModel) {
                 var aTableData = oTableModel.getProperty("/aTableData2");
 
-                // Check if aTableData is available
                 if (aTableData) {
                     aTableData.forEach(function (row) {
-                        // Check if Plant exists and is '1400'
                         row.isBatchEditable = (row.Plant === "1400");
                     });
 
-                    // Update the model with the modified data
                     oTableModel.setProperty("/aTableData2", aTableData);
                 } else {
                     console.warn("No data found at /aTableData2");
@@ -382,7 +379,7 @@ sap.ui.define([
                             UOM: item.BaseUnit,
                             Plant: item.Plant,
                             MovementType: goodsreceipt === 'RECASIS' ? '542' : '101',
-                            PostedQuantity: item.Postedquantity,
+                            PostedQuantity: item.Postedquantity + " " + item.BaseUnit,
                             StorageLocation: item.StorageLocation,
                             Quantity: item.Quantity,
                             Entered: item.Postedquantity,
@@ -405,84 +402,317 @@ sap.ui.define([
         /**
          * Fetch subcomponents or consumption items (normal flow only)
          */
+        // _fetchSubcomponents: function (oModel, aTableData, goodsreceipt, purchaseNum, oBusyDialog) {
+        //     var that = this;
+        //     var path = purchaseNum.startsWith("55") ? "/subcomponent" : "/Consumption_Item";
+        //     var aSecondFilters = [];
+
+        //     if (purchaseNum.startsWith("55")) {
+        //         aSecondFilters = aTableData.map(function (row) {
+        //             return new sap.ui.model.Filter({
+        //                 filters: [
+        //                     new sap.ui.model.Filter("Ponumber", "EQ", row.PONumber),
+        //                     new sap.ui.model.Filter("GateEntryId", "EQ", row.GateEntryID)
+        //                 ],
+        //                 and: true
+        //             });
+        //         });
+        //     } else {
+        //         aTableData.forEach(function (row) {
+        //             aSecondFilters.push(new sap.ui.model.Filter("PurchaseOrder", "EQ", row.PONumber));
+        //             aSecondFilters.push(new sap.ui.model.Filter("PurchaseOrderItem", "EQ", row.ItemNo));
+        //             aSecondFilters.push(new sap.ui.model.Filter("GateEntryId", "EQ", row.GateEntryID));
+        //         });
+        //     }
+
+        //     oModel.read(path, {
+        //         filters: aSecondFilters,
+        //         urlParameters: { "$top": "5000" },
+        //         success: function (oRespo2) {
+        //             oBusyDialog.close();
+
+        //             if (oRespo2.results.length > 0) {
+        //                 const aTableData2 = [];
+        //                 oRespo2.results.forEach(function (item) {
+        //                     aTableData2.push({
+        //                         GateEntryID: item.GateEntryId || '',
+        //                         PONumber: goodsreceipt === "RECASIS" ? '' : (item.Ponumber || item.PurchaseOrder || ''),
+        //                         ItemNo: goodsreceipt === "RECASIS" ? '' : (item.Itemno || item.PurchaseOrderItem || ''),
+        //                         Material: item.BillOfMaterialComponent ?
+        //                             (item.BillOfMaterialComponent.substring(0, 10) !== "0000000000" ? '0000000000' + item.BillOfMaterialComponent : item.BillOfMaterialComponent)
+        //                             : (item.Material && item.Material.substring(0, 10) !== "0000000000" ? '0000000000' + item.Material : item.Material) || '',
+        //                         MaterialDesc: item.ProductDescription || '',
+        //                         UOM: item.BaseUnit || '',
+        //                         Plant: that.getView().byId("Plant").getText(),
+        //                         MovementType: '543',
+        //                         PostedQuantity: item.RequiredQuantity || '',
+        //                         Entered: item.RequiredQuantity || '',
+        //                         StorageLocation: item.StorageLocation || '',
+        //                         Quantity: item.RequiredQuantity || '',
+        //                         ItemCategory: '',
+        //                         Batch: item.Batch || '',
+        //                         BatchQty: '',
+        //                     });
+        //                 });
+
+        //                 // Merge table data
+        //                 const aTableData3 = [];
+        //                 aTableData.forEach(function (item1) {
+        //                     aTableData3.push(item1);
+        //                     aTableData2.forEach(function (item2) {
+        //                         if (item2.PONumber == item1.PONumber && item2.ItemNo == item1.ItemNo) {
+        //                             aTableData3.push(item2);
+        //                         }
+        //                     });
+        //                 });
+
+        //                 that.getView().getModel('oDataModel').setProperty("/aTableData", aTableData3);
+        //             } else {
+        //                 that.getView().getModel('oDataModel').setProperty("/aTableData", aTableData);
+        //                 if (path != '/subcomponent' && !purchaseNum.startsWith("45") && goodsreceipt != 'RECASIS') {
+        //                     sap.m.MessageToast.show("No matching subcomponent items found.");
+        //                 }
+        //             }
+        //         },
+        //         error: function () {
+        //             oBusyDialog.close();
+        //         }
+        //     });
+        // },
+
+        /**
+         * Fetch subcomponents or consumption items (normal flow only)
+         * and restructure data hierarchically for TreeTable
+         */
+        // _fetchSubcomponents: function (oModel, aTableData, goodsreceipt, purchaseNum, oBusyDialog) {
+        //     var that = this;
+        //     var path = purchaseNum.startsWith("55") ? "/subcomponent" : "/Consumption_Item";
+        //     var aSecondFilters = [];
+
+        //     if (purchaseNum.startsWith("55")) {
+        //         aSecondFilters = aTableData.map(function (row) {
+        //             return new sap.ui.model.Filter({
+        //                 filters: [
+        //                     new sap.ui.model.Filter("Ponumber", "EQ", row.PONumber),
+        //                     new sap.ui.model.Filter("GateEntryId", "EQ", row.GateEntryID)
+        //                 ],
+        //                 and: true
+        //             });
+        //         });
+        //     } else {
+        //         aTableData.forEach(function (row) {
+        //             aSecondFilters.push(new sap.ui.model.Filter("PurchaseOrder", "EQ", row.PONumber));
+        //             aSecondFilters.push(new sap.ui.model.Filter("PurchaseOrderItem", "EQ", row.ItemNo));
+        //             aSecondFilters.push(new sap.ui.model.Filter("GateEntryId", "EQ", row.GateEntryID));
+        //         });
+        //     }
+
+        //     oModel.read(path, {
+        //         filters: aSecondFilters,
+        //         urlParameters: { "$top": "5000" },
+        //         success: function (oRespo2) {
+        //             oBusyDialog.close();
+
+        //             // Build hierarchical structure
+        //             const aHierarchicalData = aTableData.map(function (parent) {
+        //                 const children = oRespo2.results
+        //                     .filter(function (item) {
+        //                         const po = item.Ponumber || item.PurchaseOrder;
+        //                         const poItem = item.Itemno || item.PurchaseOrderItem;
+        //                         return (
+        //                             parent.PONumber === po &&
+        //                             parent.ItemNo === poItem &&
+        //                             parent.GateEntryID === item.GateEntryId
+        //                         );
+        //                     })
+        //                     .map(function (item) {
+        //                         return {
+        //                             GateEntryID: item.GateEntryId || '',
+        //                             PONumber: goodsreceipt === "RECASIS" ? '' : (item.Ponumber || item.PurchaseOrder || ''),
+        //                             ItemNo: goodsreceipt === "RECASIS" ? '' : (item.Itemno || item.PurchaseOrderItem || ''),
+        //                             Material: item.BillOfMaterialComponent
+        //                                 ? (item.BillOfMaterialComponent.substring(0, 10) !== "0000000000"
+        //                                     ? '0000000000' + item.BillOfMaterialComponent
+        //                                     : item.BillOfMaterialComponent)
+        //                                 : (item.Material && item.Material.substring(0, 10) !== "0000000000"
+        //                                     ? '0000000000' + item.Material
+        //                                     : item.Material) || '',
+        //                             MaterialDesc: item.ProductDescription || '',
+        //                             UOM: item.BaseUnit || '',
+        //                             Plant: that.getView().byId("Plant").getText(),
+        //                             MovementType: '543',
+        //                             PostedQuantity: item.RequiredQuantity || '',
+        //                             Entered: item.RequiredQuantity || '',
+        //                             StorageLocation: item.StorageLocation || '',
+        //                             Quantity: item.RequiredQuantity || '',
+        //                             ItemCategory: '',
+        //                             Batch: item.Batch || '',
+        //                             BatchQty: '',
+        //                             children: [] // keep for deeper nesting if needed
+        //                         };
+        //                     });
+
+        //                 return { ...parent, children };
+        //             });
+
+        //             // Bind hierarchical data
+        //             that.getView().getModel('oDataModel').setProperty("/aTableData", aHierarchicalData);
+
+        //             // If no subcomponents found
+        //             if (oRespo2.results.length === 0 && path !== '/subcomponent' && !purchaseNum.startsWith("45") && goodsreceipt !== 'RECASIS') {
+        //                 sap.m.MessageToast.show("No matching subcomponent items found.");
+        //             }
+        //         },
+        //         error: function () {
+        //             oBusyDialog.close();
+        //         }
+        //     });
+        // },
+
         _fetchSubcomponents: function (oModel, aTableData, goodsreceipt, purchaseNum, oBusyDialog) {
             var that = this;
-            var path = purchaseNum.startsWith("55") ? "/subcomponent" : "/Consumption_Item";
-            var aSecondFilters = [];
 
+            // Check if the purchaseNum starts with "55"
             if (purchaseNum.startsWith("55")) {
-                aSecondFilters = aTableData.map(function (row) {
-                    return new sap.ui.model.Filter({
-                        filters: [
-                            new sap.ui.model.Filter("Ponumber", "EQ", row.PONumber),
-                            new sap.ui.model.Filter("GateEntryId", "EQ", row.GateEntryID)
-                        ],
-                        and: true
+                // Perform AJAX call for API_SCHED_AGRMT_PROCESS_SRV
+                //https://my424380-api.s4hana.cloud.sap/sap/opu/odata/sap/API_SCHED_AGRMT_PROCESS_SRV/A_SchAgrmtSchLine(SchedulingAgreement=%275500000023%27,SchedulingAgreementItem=%2710%27,ScheduleLine=%271%27)/to_SchedgAgrmtSubcontrgCompTP
+
+
+                var url = "/sap/bc/http/sap/ZGRN_SUBCOMPONENT_API";
+                var ajaxCalls = aTableData.map(function (row) {
+                    var oPayload = {
+                        SchedulingAgreement: row.PONumber,
+                        SchedulingAgreementItem: row.ItemNo,
+                        ScheduleLine: "1"
+                    };
+                    return $.ajax({
+                        url: url,
+                        type: 'POST',
+                        data: JSON.stringify(oPayload),
+                        dataType: 'json',
+                        headers: {
+                            "Accept": "application/json",
+                        }
                     });
                 });
+
+                // Wait for all AJAX calls to complete
+                $.when.apply($, ajaxCalls).done(function () {
+                    oBusyDialog.close();
+
+                    // Flatten results from multiple calls
+                    var resultsArray = Array.prototype.slice.call(arguments).map(function (arg) {
+                        // Depending on single or multiple AJAX calls, the response structure differs
+                        return arg || [];
+                    }).flat();
+
+                    // Build hierarchical structure
+                    const aHierarchicalData = aTableData.map(function (parent) {
+                        const children = resultsArray
+                            .filter(function (item) {
+                                return parent.PONumber === item.SCHEDULINGAGREEMENT &&
+                                    parent.ItemNo === item.SCHEDULINGAGREEMENTITEM;
+                            })
+                            .map(function (item) {
+                                return {
+                                    IsChild: true, // 👈 mark as child
+                                    GateEntryID: parent.GateEntryID,
+                                    PONumber: goodsreceipt === "RECASIS" ? '' : parent.PONumber,
+                                    ItemNo: goodsreceipt === "RECASIS" ? '' : parent.ItemNo,
+                                    Material: item.MATERIAL || '',
+                                    MaterialDesc: item.MATERIAL || '',
+                                    UOM: item.ENTRYUNIT || '',
+                                    Plant: that.getView().byId("Plant").getText(),
+                                    MovementType: '543',
+                                    PostedQuantity: '',
+                                    Entered: Number(((item.QUANTITYINENTRYUNIT / parent.Quantity) * parent.Entered).toFixed(2)) || '',
+                                    StorageLocation: '',
+                                    Quantity: item.QUANTITYINENTRYUNIT || '',
+                                    ItemCategory: '',
+                                    Batch: item.Batch || '',
+                                    BatchQty: '',
+                                    children: []
+                                };
+                            });
+
+                        return {
+                            ...parent,
+                            IsChild: false, // 👈 mark as parent
+                            children
+                        };
+                    });
+
+
+                    that.getView().getModel('oDataModel').setProperty("/aTableData", aHierarchicalData);
+
+                    if (resultsArray.length === 0 && goodsreceipt !== 'RECASIS') {
+                        sap.m.MessageToast.show("No matching subcomponent items found.");
+                    }
+
+                }).fail(function () {
+                    oBusyDialog.close();
+                    sap.m.MessageToast.show("Failed to fetch subcomponent data.");
+                });
+
             } else {
+                // Default logic for /Consumption_Item
+                var path = "/Consumption_Item";
+                var aSecondFilters = [];
+
                 aTableData.forEach(function (row) {
                     aSecondFilters.push(new sap.ui.model.Filter("PurchaseOrder", "EQ", row.PONumber));
                     aSecondFilters.push(new sap.ui.model.Filter("PurchaseOrderItem", "EQ", row.ItemNo));
                     aSecondFilters.push(new sap.ui.model.Filter("GateEntryId", "EQ", row.GateEntryID));
                 });
-            }
 
-            oModel.read(path, {
-                filters: aSecondFilters,
-                urlParameters: { "$top": "5000" },
-                success: function (oRespo2) {
-                    oBusyDialog.close();
+                oModel.read(path, {
+                    filters: aSecondFilters,
+                    urlParameters: { "$top": "5000" },
+                    success: function (oRespo2) {
+                        oBusyDialog.close();
 
-                    if (oRespo2.results.length > 0) {
-                        const aTableData2 = [];
-                        oRespo2.results.forEach(function (item) {
-                            aTableData2.push({
-                                GateEntryID: item.GateEntryId || '',
-                                PONumber: goodsreceipt === "RECASIS" ? '' : (item.Ponumber || item.PurchaseOrder || ''),
-                                ItemNo: goodsreceipt === "RECASIS" ? '' : (item.Itemno || item.PurchaseOrderItem || ''),
-                                Material: item.BillOfMaterialComponent ?
-                                    (item.BillOfMaterialComponent.substring(0, 10) !== "0000000000" ? '0000000000' + item.BillOfMaterialComponent : item.BillOfMaterialComponent)
-                                    : (item.Material && item.Material.substring(0, 10) !== "0000000000" ? '0000000000' + item.Material : item.Material) || '',
-                                MaterialDesc: item.ProductDescription || '',
-                                UOM: item.BaseUnit || '',
-                                Plant: that.getView().byId("Plant").getText(),
-                                MovementType: '543',
-                                PostedQuantity: item.RequiredQuantity || '',
-                                Entered: item.RequiredQuantity || '',
-                                StorageLocation: item.StorageLocation || '',
-                                Quantity: item.RequiredQuantity || '',
-                                ItemCategory: '',
-                                Batch: item.Batch || '',
-                                BatchQty: '',
-                            });
+                        const aHierarchicalData = aTableData.map(function (parent) {
+                            const children = oRespo2.results
+                                .filter(function (item) {
+                                    return parent.PONumber === item.PurchaseOrder &&
+                                        parent.ItemNo === item.PurchaseOrderItem &&
+                                        parent.GateEntryID === item.GateEntryId;
+                                })
+                                .map(function (item) {
+                                    return {
+                                        GateEntryID: item.GateEntryId || '',
+                                        PONumber: goodsreceipt === "RECASIS" ? '' : item.PurchaseOrder || '',
+                                        ItemNo: goodsreceipt === "RECASIS" ? '' : item.PurchaseOrderItem || '',
+                                        Material: item.Material || '',
+                                        MaterialDesc: item.ProductDescription || '',
+                                        UOM: item.BaseUnit || '',
+                                        Plant: that.getView().byId("Plant").getText(),
+                                        MovementType: '543',
+                                        PostedQuantity: item.RequiredQuantity || '',
+                                        Entered: item.RequiredQuantity || '',
+                                        StorageLocation: item.StorageLocation || '',
+                                        Quantity: item.RequiredQuantity || '',
+                                        ItemCategory: '',
+                                        Batch: item.Batch || '',
+                                        BatchQty: '',
+                                        children: []
+                                    };
+                                });
+                            return { ...parent, children };
                         });
 
-                        // Merge table data
-                        const aTableData3 = [];
-                        aTableData.forEach(function (item1) {
-                            aTableData3.push(item1);
-                            aTableData2.forEach(function (item2) {
-                                if (item2.PONumber == item1.PONumber && item2.ItemNo == item1.ItemNo) {
-                                    aTableData3.push(item2);
-                                }
-                            });
-                        });
+                        that.getView().getModel('oDataModel').setProperty("/aTableData", aHierarchicalData);
 
-                        that.getView().getModel('oDataModel').setProperty("/aTableData", aTableData3);
-                    } else {
-                        that.getView().getModel('oDataModel').setProperty("/aTableData", aTableData);
-                        if (path != '/subcomponent' && !purchaseNum.startsWith("45") && goodsreceipt != 'RECASIS') {
+                        if (oRespo2.results.length === 0 && goodsreceipt !== 'RECASIS') {
                             sap.m.MessageToast.show("No matching subcomponent items found.");
                         }
+                    },
+                    error: function () {
+                        oBusyDialog.close();
                     }
-                },
-                error: function () {
-                    oBusyDialog.close();
-                }
-            });
+                });
+            }
         },
-
 
         ScreenRefreshFunction: function () {
             var that = this;
@@ -942,8 +1172,6 @@ sap.ui.define([
             });
         },
 
-
-
         handleTwoEntity: function () {
             var purchaseNum = this.getView().byId("PONumber").getText();
             if (purchaseNum.startsWith("55")) {
@@ -952,7 +1180,6 @@ sap.ui.define([
                 this.handle_table2Data111N();
             }
         },
-
 
         onSave_MovementType101: function (oEvent) {
             var oBusyDialog = new sap.m.BusyDialog({
@@ -1508,9 +1735,6 @@ sap.ui.define([
                 }.bind(this)
             });
         },
-
-
-
 
         onValueHelpRequestStorageLocation1: function (oEvent) {
             var oView = this.getView();
@@ -2211,7 +2435,36 @@ sap.ui.define([
             // ===================================================
             oTable.setModel(this.getView().getModel());
             oVHD.open();
+        },
+        onPostedQtyChange: function (oEvent) {
+            var oInput = oEvent.getSource();
+            var oContext = oInput.getBindingContext("oDataModel");
+            if (!oContext) return;
+
+            var oModel = oContext.getModel();
+            var oParentData = oContext.getObject();
+
+            // parent entered qty (user input)
+            var parentEntered = parseFloat(oEvent.getParameter("value")) || 0;
+            var parentQty = parseFloat(oParentData.Quantity) || 0;
+
+            if (parentQty <= 0) {
+                return; // avoid divide by zero
+            }
+
+            // update children
+            if (oParentData.children && oParentData.children.length > 0) {
+                oParentData.children.forEach(child => {
+                    var childOldEntered = parseFloat(child.Quantity) || 0;
+                    var newChildEntered = (childOldEntered / parentQty) * parentEntered;
+                    child.Entered = newChildEntered.toFixed(2); // round to 2 decimals
+                });
+
+                // refresh model so UI updates
+                oModel.refresh(true);
+            }
         }
+
 
     });
 });

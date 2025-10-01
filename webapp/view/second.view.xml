@@ -4,6 +4,7 @@
   xmlns:core="sap.ui.core"
   xmlns:u="sap.ui.unified"
   xmlns="sap.m"
+  xmlns:table="sap.ui.table"
   xmlns:f="sap.f"
   xmlns:upload="sap.m.upload"
   xmlns:svm="sap.ui.comp.smartvariants">
@@ -12,7 +13,7 @@
       <f:title>
         <f:DynamicPageTitle id="_IDGenDynamicPageTitle2">
           <f:actions>
-            <Button text="Scan" id="Scan" press="onSave" type="Emphasized" icon="sap-icon://save" visible="{= ${ObjectModel>/savebtn} }"/>
+            <Button text="Post" id="Scan" press="onSave" type="Emphasized" icon="sap-icon://save" visible="{= ${ObjectModel>/savebtn} }"/>
 
             <Button text="Cancel GRN" id="cancelGrn" press="onCancelPress" type="Reject" icon="sap-icon://delete" visible="{= !${ObjectModel>/savebtn} }"/>
 
@@ -57,7 +58,7 @@
                 <Title id="_IDGenTitle2" text="ASN Details"/>
               </OverflowToolbar>
             </headerToolbar>
-            <content>  
+            <content>
               <HBox id="HBox1">
                 <VBox id="VBox1" width="20%">
                   <Label id="_IDGenLabel" text="PO Number" design="Bold"/>
@@ -163,92 +164,117 @@
                   <Label id="_IDGenLabel21" text="Header Text" design="Bold"/>
                   <Input id="HeaderText" placeholder="Enter Header Text" width="75%" visible="false"/>
                 </VBox>
-                
+
               </HBox>
             </content>
           </Panel>
-          <Table id="FirstTable" items="{path: 'oDataModel>/aTableData'}" alternateRowColors="true" sticky="ColumnHeaders,HeaderToolbar">
 
-            <!-- Header Toolbar -->
-            <headerToolbar>
-              <OverflowToolbar id="Table_OverflowToolbar">
-                <Title id="_IDGenTitle" text="Items" level="H2"/>
-                <ToolbarSpacer id="Table_ToolbarSpacer"/>
-              </OverflowToolbar>
-            </headerToolbar>
+          <table:TreeTable id="LineItemTreeTable" rows="{
+                    path: 'oDataModel>/aTableData',
+                    parameters: {
+                        arrayNames: ['children']
+                    }
+                }" selectionMode="None" visibleRowCountMode="Auto" expandFirstLevel="true" alternateRowColors="true" visibleRowCount="15" enableColumnReordering="false">
 
-            <!-- No Data -->
-            <noData>
-              <IllustratedMessage id="_IDGenIllustratedMessage" illustrationSize="Auto" title="No Data Found!!" ariaTitleLevel="H5" enableFormattedText="true" description=""/>
-            </noData>
-
-            <!-- Columns -->
-            <columns>
-              <Column id="_IDGenColumn" width="8%" visible="false">
-                <Text id="_IDGenText" text="ASN" emptyIndicatorMode="Auto"/>
-              </Column>
-              <Column id="_IDGenColumn1" width="10%" visible="false">
-                <Text id="_IDGenText1" text="PO Number" emptyIndicatorMode="Auto"/>
-              </Column>
-              <Column id="_IDGenColumn2" width="7%">
-                <Text id="_IDGenText2" text="Item No." emptyIndicatorMode="Auto"/>
-              </Column>
-              <Column id="_IDGenColumn3" width="20%">
-                <Text id="_IDGenText3" text="Material" emptyIndicatorMode="Auto"/>
-              </Column>
-              <Column id="_IDGenColumn6">
-                <Text id="_IDGenText6" text="Movement Type" emptyIndicatorMode="Auto"/>
-              </Column>
-              <Column id="_IDGenColumn7">
-                <Text id="_IDGenText7" text="Posted Quantity" emptyIndicatorMode="Auto"/>
-              </Column>
-              <Column id="_IDGenColumn8">
-                <Text id="_IDGenText8" text="Storage Location" emptyIndicatorMode="Auto"/>
-              </Column>
-              <Column id="_IDGenColumn9">
-                <Text id="_IDGenText9" text="Quantity" emptyIndicatorMode="Auto"/>
-              </Column>
-              <Column id="_IDGenColumn13" width="7%">
-                <Text id="_IDGenText13" text="UOM" emptyIndicatorMode="Auto"/>
-              </Column>
-              <Column id="_IDGenColumn10" visible="false">
-                <Text id="_IDGenText10" text="Item Category" emptyIndicatorMode="Auto"/>
-              </Column>
-              <Column id="_IDGenColumn11" width="7%">
-                <Text id="_IDGenText11" text="Batch" emptyIndicatorMode="Auto"/>
-              </Column>
-              <Column id="_IDGenColumn12" width="7%">
-                <Text id="_IDGenText12" text="Batch Qty" emptyIndicatorMode="Auto"/>
-              </Column>
-            </columns>
-
-            <!-- Items / Rows -->
-            <items>
-              <ColumnListItem id="_IDGenColumnListItem">
-                <cells>
+            <table:columns>
+              <!-- ASN -->
+              <table:Column id="_IDGenColumn" width="8%" visible="false">
+                <Label text="ASN" />
+                <table:template>
                   <Input id="_IDGenInput" type="Text" maxLength="40" editable="false" value="{oDataModel>GateEntryID}" />
+                </table:template>
+              </table:Column>
+
+              <!-- PO Number -->
+              <table:Column id="_IDGenColumn1" width="10%" visible="false">
+                <Label text="PO Number" />
+                <table:template>
                   <Input id="_IDGenInput1" type="Text" maxLength="40" editable="false" value="{oDataModel>PONumber}" />
+
+                </table:template>
+              </table:Column>
+
+              <!-- Item No -->
+              <table:Column id="_IDGenColumn2" width="7%">
+                <Label text="Item No." />
+                <table:template>
                   <Input id="_IDGenInput2" type="Text" maxLength="40" editable="false" value="{oDataModel>ItemNo}" />
+                </table:template>
+              </table:Column>
+
+              <!-- Material -->
+              <table:Column id="_IDGenColumn3" width="20%">
+                <Label text="Material" />
+                <table:template>
                   <Input id="_IDGenInput3" type="Text" maxLength="40" editable="false" value="{oDataModel>MaterialDesc}({oDataModel>Material})" />
+                </table:template>
+              </table:Column>
 
+              <!-- Movement Type -->
+              <table:Column id="_IDGenColumn6">
+                <Label text="Movement Type" />
+                <table:template>
                   <Input id="_IDGenInput6" type="Text" maxLength="40" editable="false" value="{oDataModel>MovementType}" />
-                  <Input id="idQuantity" type="Text" maxLength="40" editable="false" value="{oDataModel>PostedQuantity} {oDataModel>UOM}"/>
+                </table:template>
+              </table:Column>
 
-                  <!-- Storage Location with Value Help -->
-                  <Input id="_IDGenInput8" value="{oDataModel>StorageLocation}" showValueHelp="true" editable="{= ${ObjectModel>/savebtn} }" valueLiveUpdate="true" valueHelpRequest=".onValueHelpRequestStorageLocation"/>
+              <!-- Posted Quantity -->
+              <table:Column id="_IDGenColumn7">
+                <Label text="Posted Quantity" />
+                <table:template>
+                  <Input id="idQuantity" type="Text" maxLength="40" editable="false" value="{oDataModel>PostedQuantity}"/>
+                </table:template>
+              </table:Column>
 
-                  <Input id="idEnteredQty" type="Text" maxLength="40" editable="{= ${ObjectModel>/savebtn} }" value="{oDataModel>Entered}" liveChange=".onPostedQtyChange"/>
-                  <Text id="_IDGenText5" text="{oDataModel>UOM}"/>
+              <!-- Storage Location -->
+              <table:Column id="_IDGenColumn8">
+                <Label text="Storage Location" />
+                <table:template>
+                  <Input id="_IDGenInput8" value="{oDataModel>StorageLocation}" showValueHelp="true" editable="{= !${oDataModel>IsChild} ? ${ObjectModel>/savebtn} : false }" valueLiveUpdate="true" valueHelpRequest=".onValueHelpRequestStorageLocation"/>
+                </table:template>
+              </table:Column>
+
+              <!-- Quantity -->
+              <table:Column id="_IDGenColumn9">
+                <Label text="Quantity" />
+                <table:template>
+                  <Input id="idEnteredQty" type="Text" maxLength="40" editable="{= !${oDataModel>IsChild} ? ${ObjectModel>/savebtn} : false }" value="{oDataModel>Entered}" change=".onPostedQtyChange"/>
+                </table:template>
+              </table:Column>
+
+              <!-- UOM -->
+              <table:Column id="_IDGenColumn13" width="7%">
+                <Label text="UOM" />
+                <table:template>
+                  <Text text="{oDataModel>UOM}" />
+                </table:template>
+              </table:Column>
+
+              <!-- Item Category -->
+              <table:Column id="_IDGenColumn10" visible="false">
+                <Label text="Item Category" />
+                <table:template>
                   <Input id="_IDGenInput10" type="Text" maxLength="40" editable="false" value="{oDataModel>ItemCategory}" />
+                </table:template>
+              </table:Column>
 
-                  <!-- Batch with editable logic -->
+              <!-- Batch -->
+              <table:Column id="_IDGenColumn11" width="7%">
+                <Label text="Batch" />
+                <table:template>
                   <Input id="_IDGenInput11" showValueHelp="true" type="Text" valueHelpRequest="onBatchalueHelpRequest" maxLength="40" editable="{= ${oDataModel>Plant} === '1400' &amp;&amp; ${oDataModel>MovementType} === '543' }" value="{oDataModel>Batch}"/>
+                </table:template>
+              </table:Column>
 
+              <!-- Batch Qty -->
+              <table:Column id="_IDGenColumn12" width="7%">
+                <Label text="Batch Qty" />
+                <table:template>
                   <Input id="_IDGenInput12" type="Text" maxLength="40" editable="{= ${oDataModel>Plant} === '1400' &amp;&amp; ${oDataModel>MovementType} === '543' }" value="{oDataModel>BatchQty}"/>
-                </cells>
-              </ColumnListItem>
-            </items>
-          </Table>
+                </table:template>
+              </table:Column>
+            </table:columns>
+          </table:TreeTable>
 
           <SelectDialog multiSelect="true" contentWidth="50%" contentHeight="50%" id="idBatchSelectDialog" noDataText="No Batchs Found" title="Select Batchs" search=".onBatchSelectDialogSearch" confirm=".onBatchSelectDialogConfirm" cancel=".onBatchSelectDialogConfirm" items="{path: '/BATCHF4'}">
             <StandardListItem id="idBatchStandardListItem" title="{Batch}" info="" type="Active" />
