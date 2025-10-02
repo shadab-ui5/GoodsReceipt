@@ -37,14 +37,9 @@ sap.ui.define([
 
         },
         onNavBack: function () {
-            var oHistory = sap.ui.core.routing.History.getInstance();
-            var sPreviousHash = oHistory.getPreviousHash();
 
-            if (sPreviousHash !== undefined) {
-                window.history.go(-1);
-            } else {
-                this.getOwnerComponent().getRouter().navTo("RouteView1", {}, true); // replace with actual route
-            }
+            this.getOwnerComponent().getRouter().navTo("RouteView1", {}, true); // replace with actual route
+
         },
         extractValue: function (str) {
             // Match content inside brackets
@@ -94,12 +89,15 @@ sap.ui.define([
             const ObjectModel = oComponent.getModel("ObjectModel");
             if (!ObjectModel) {
                 this.onNavBack();
+            } else {
+                var obj = {
+                    "asn": currentAsn,
+                }
+                ObjectModel.setProperty("/object", obj);
+                ObjectModel.setProperty("/savebtn", true);
             }
-            var obj = {
-                "asn": currentAsn,
-            }
-            ObjectModel.setProperty("/object", obj);
-            ObjectModel.setProperty("/savebtn", true);
+
+
             const oBusyDialog = this._createBusyDialog();
             oBusyDialog.open();
 
@@ -384,6 +382,8 @@ sap.ui.define([
                             Quantity: item.Quantity,
                             Entered: item.Postedquantity,
                             ItemCategory: item.PurchaseOrderItemCategory,
+                            schAgrlineItemCat: item.schAgrlineItemCat,
+                            purOrderlineItemCat: item.purOrderlineItemCat,
                             Batch: '',
                             BatchQty: '',
                         });
@@ -572,211 +572,120 @@ sap.ui.define([
         _fetchSubcomponents: function (oModel, aTableData, goodsreceipt, purchaseNum, oBusyDialog) {
             var that = this;
 
-            // Check if the purchaseNum starts with "55"
-            if (purchaseNum.startsWith("55")) {
-                // Perform AJAX call for API_SCHED_AGRMT_PROCESS_SRV
-                //https://my424380-api.s4hana.cloud.sap/sap/opu/odata/sap/API_SCHED_AGRMT_PROCESS_SRV/A_SchAgrmtSchLine(SchedulingAgreement=%275500000023%27,SchedulingAgreementItem=%2710%27,ScheduleLine=%271%27)/to_SchedgAgrmtSubcontrgCompTP
+            var isSA = purchaseNum.startsWith("55");
+            var url = isSA
+                ? "/sap/bc/http/sap/ZGRN_SUBCOMPONENT_API"
+                : "/sap/bc/http/sap/ZGRN_PO_SUBCOMPONENT_API";
 
+            // Clone original data and initialize children
+            var aProcessedData = aTableData.map(function (row) {
+                return {
+                    ...row,
+                    IsChild: false,
+                    children: []
+                };
+            });
 
-                var url = "/sap/bc/http/sap/ZGRN_SUBCOMPONENT_API";
-                var ajaxCalls = aTableData.map(function (row) {
-                    var oPayload = {
-                        SchedulingAgreement: row.PONumber,
-                        SchedulingAgreementItem: row.ItemNo,
-                        ScheduleLine: "1"
-                    };
-                    return $.ajax({
-                        url: url,
-                        type: 'POST',
-                        data: JSON.stringify(oPayload),
-                        dataType: 'json',
-                        headers: {
-                            "Accept": "application/json",
-                        }
-                    });
+            // Filter based on correct ItemCategory field
+            var aRowsWithL = aProcessedData.filter(function (row) {
+                return isSA
+                    ? row.schAgrlineItemCat === 'L'
+                    : row.purOrderlineItemCat === 'L';
+            });
+
+            if (aRowsWithL.length === 0) {
+                oBusyDialog.close();
+                that.getView().getModel('oDataModel').setProperty("/aTableData", aProcessedData);
+                return;
+            }
+
+            oBusyDialog.open();
+
+            // Make individual AJAX calls for rows with 'L' category
+            var ajaxCalls = aRowsWithL.map(function (row) {
+                var oPayload = {
+                    SchedulingAgreement: row.PONumber,
+                    SchedulingAgreementItem: row.ItemNo,
+                    ScheduleLine: "1"
+                };
+
+                return $.ajax({
+                    url: url,
+                    type: 'POST',
+                    contentType: 'application/json',
+                    dataType: 'json',
+                    data: JSON.stringify(oPayload),
+                    headers: {
+                        "Accept": "application/json"
+                    }
                 });
+            });
 
-                // Wait for all AJAX calls to complete
-                $.when.apply($, ajaxCalls).done(function () {
-                    oBusyDialog.close();
+            $.when.apply($, ajaxCalls).done(function () {
+                oBusyDialog.close();
 
-                    // Flatten results from multiple calls
-                    var resultsArray = Array.prototype.slice.call(arguments).map(function (arg) {
-                        // Depending on single or multiple AJAX calls, the response structure differs
-                        return arg || [];
+                var resultsArray = [];
+
+                if (ajaxCalls.length === 1) {
+                    resultsArray = arguments[0] || [];
+                } else {
+                    resultsArray = Array.prototype.slice.call(arguments).map(function (arg) {
+                        return arg[0] || [];
                     }).flat();
+                }
 
-                    // Build hierarchical structure
-                    const aHierarchicalData = aTableData.map(function (parent) {
-                        const children = resultsArray
+                var aHierarchicalData = aProcessedData.map(function (parent) {
+                    var shouldCheck = isSA
+                        ? parent.schAgrlineItemCat === 'L'
+                        : parent.purOrderlineItemCat === 'L';
+
+                    var children = [];
+
+                    if (shouldCheck) {
+                        children = resultsArray
                             .filter(function (item) {
-                                return parent.PONumber === item.SCHEDULINGAGREEMENT &&
-                                    parent.ItemNo === item.SCHEDULINGAGREEMENTITEM;
+                                return parent.PONumber === (item.SCHEDULINGAGREEMENT || item.PurchaseOrder) &&
+                                    parent.ItemNo === (item.SCHEDULINGAGREEMENTITEM || item.PurchaseOrderItem);
                             })
                             .map(function (item) {
                                 return {
-                                    IsChild: true, // 👈 mark as child
+                                    IsChild: true,
                                     GateEntryID: parent.GateEntryID,
-                                    PONumber: goodsreceipt === "RECASIS" ? '' : parent.PONumber,
-                                    ItemNo: goodsreceipt === "RECASIS" ? '' : parent.ItemNo,
-                                    Material: item.MATERIAL || '',
-                                    MaterialDesc: item.MATERIAL || '',
-                                    UOM: item.ENTRYUNIT || '',
+                                    PONumber: goodsreceipt === "RECASIS" ? '' : (item.SCHEDULINGAGREEMENT || item.PurchaseOrder || ''),
+                                    ItemNo: goodsreceipt === "RECASIS" ? '' : (item.SCHEDULINGAGREEMENTITEM || item.PurchaseOrderItem || ''),
+                                    Material: item.MATERIAL || item.Material || '',
+                                    MaterialDesc: item.MATERIAL || item.ProductDescription || '',
+                                    UOM: item.ENTRYUNIT || item.BaseUnit || '',
                                     Plant: that.getView().byId("Plant").getText(),
                                     MovementType: '543',
                                     PostedQuantity: '',
                                     Entered: Number(((item.QUANTITYINENTRYUNIT / parent.Quantity) * parent.Entered).toFixed(2)) || '',
-                                    StorageLocation: '',
-                                    Quantity: item.QUANTITYINENTRYUNIT || '',
+                                    StorageLocation: item.StorageLocation || '',
+                                    Quantity: item.QUANTITYINENTRYUNIT || item.RequiredQuantity || '',
                                     ItemCategory: '',
                                     Batch: item.Batch || '',
                                     BatchQty: '',
                                     children: []
                                 };
                             });
-
-                        return {
-                            ...parent,
-                            IsChild: false, // 👈 mark as parent
-                            children
-                        };
-                    });
-
-
-                    that.getView().getModel('oDataModel').setProperty("/aTableData", aHierarchicalData);
-
-                    if (resultsArray.length === 0 && goodsreceipt !== 'RECASIS') {
-                        sap.m.MessageToast.show("No matching subcomponent items found.");
                     }
 
-                }).fail(function () {
-                    oBusyDialog.close();
-                    sap.m.MessageToast.show("Failed to fetch subcomponent data.");
-                });
-
-            } else {
-                // // Default logic for /Consumption_Item
-                // var path = "/Consumption_Item";
-                // var aSecondFilters = [];
-
-                // aTableData.forEach(function (row) {
-                //     aSecondFilters.push(new sap.ui.model.Filter("PurchaseOrder", "EQ", row.PONumber));
-                //     aSecondFilters.push(new sap.ui.model.Filter("PurchaseOrderItem", "EQ", row.ItemNo));
-                //     aSecondFilters.push(new sap.ui.model.Filter("GateEntryId", "EQ", row.GateEntryID));
-                // });
-
-                // oModel.read(path, {
-                //     filters: aSecondFilters,
-                //     urlParameters: { "$top": "5000" },
-                //     success: function (oRespo2) {
-                //         oBusyDialog.close();
-
-                //         const aHierarchicalData = aTableData.map(function (parent) {
-                //             const children = oRespo2.results
-                //                 .filter(function (item) {
-                //                     return parent.PONumber === item.PurchaseOrder &&
-                //                         parent.ItemNo === item.PurchaseOrderItem &&
-                //                         parent.GateEntryID === item.GateEntryId;
-                //                 })
-                //                 .map(function (item) {
-                //                     return {
-                //                         GateEntryID: item.GateEntryId || '',
-                //                         PONumber: goodsreceipt === "RECASIS" ? '' : item.PurchaseOrder || '',
-                //                         ItemNo: goodsreceipt === "RECASIS" ? '' : item.PurchaseOrderItem || '',
-                //                         Material: item.Material || '',
-                //                         MaterialDesc: item.ProductDescription || '',
-                //                         UOM: item.BaseUnit || '',
-                //                         Plant: that.getView().byId("Plant").getText(),
-                //                         MovementType: '543',
-                //                         PostedQuantity: item.RequiredQuantity || '',
-                //                         Entered: item.RequiredQuantity || '',
-                //                         StorageLocation: item.StorageLocation || '',
-                //                         Quantity: item.RequiredQuantity || '',
-                //                         ItemCategory: '',
-                //                         Batch: item.Batch || '',
-                //                         BatchQty: '',
-                //                         children: []
-                //                     };
-                //                 });
-                //             return { ...parent, children };
-                //         });
-
-                //         that.getView().getModel('oDataModel').setProperty("/aTableData", aHierarchicalData);
-
-                //         if (oRespo2.results.length === 0 && goodsreceipt !== 'RECASIS') {
-                //             sap.m.MessageToast.show("No matching subcomponent items found.");
-                //         }
-                //     },
-                //     error: function () {
-                //         oBusyDialog.close();
-                //     }
-                // });
-                var sApiUrl = "/sap/bc/http/sap/ZGRN_PO_SUBCOMPONENT_API";
-
-                // Prepare payload or query params based on aTableData
-                var aPayload = aTableData.map(function (row) {
                     return {
-                        SchedulingAgreement: row.PONumber,
-                        SchedulingAgreementItem: row.ItemNo,
-                        ScheduleLine: "1"
+                        ...parent,
+                        children
                     };
                 });
 
-                oBusyDialog.open();
+                that.getView().getModel('oDataModel').setProperty("/aTableData", aHierarchicalData);
 
-                $.ajax({
-                    url: sApiUrl,
-                    type: "POST", // assuming the API expects POST; if GET, change accordingly
-                    contentType: "application/json",
-                    data: JSON.stringify(aPayload),
-                    success: function (oRespo2) {
-                        oBusyDialog.close();
+                if (resultsArray.length === 0 && goodsreceipt !== 'RECASIS') {
+                    sap.m.MessageToast.show("No matching subcomponent items found.");
+                }
 
-                        // Map hierarchical data
-                        const aHierarchicalData = aTableData.map(function (parent) {
-                            const children = oRespo2.results
-                                .filter(function (item) {
-                                    return parent.PONumber === item.PurchaseOrder &&
-                                        parent.ItemNo === item.PurchaseOrderItem
-
-                                })
-                                .map(function (item) {
-                                    return {
-                                        IsChild: true, // 👈 mark as child
-                                        GateEntryID: item.GateEntryId || '',
-                                        PONumber: goodsreceipt === "RECASIS" ? '' : item.PurchaseOrder || '',
-                                        ItemNo: goodsreceipt === "RECASIS" ? '' : item.PurchaseOrderItem || '',
-                                        Material: item.MATERIAL || '',
-                                        MaterialDesc: item.MATERIAL || '',
-                                        UOM: item.ENTRYUNIT || '',
-                                        Plant: that.getView().byId("Plant").getText(),
-                                        MovementType: '543',
-                                        PostedQuantity: '',
-                                        Entered: Number(((item.QUANTITYINENTRYUNIT / parent.Quantity) * parent.Entered).toFixed(2)) || '',
-                                        StorageLocation: '',
-                                        Quantity: item.QUANTITYINENTRYUNIT || '',
-                                        ItemCategory: '',
-                                        Batch: item.Batch || '',
-                                        BatchQty: '',
-                                        children: []
-                                    };
-                                });
-                            return { ...parent, IsChild: false, children };
-                        });
-
-                        that.getView().getModel('oDataModel').setProperty("/aTableData", aHierarchicalData);
-
-                        if (!oRespo2.results || oRespo2.results.length === 0 && goodsreceipt !== 'RECASIS') {
-                            sap.m.MessageToast.show("No matching subcomponent items found.");
-                        }
-                    },
-                    error: function (err) {
-                        oBusyDialog.close();
-                        sap.m.MessageToast.show("Error fetching subcomponent items.");
-                        console.error(err);
-                    }
-                });
-            }
+            }).fail(function () {
+                oBusyDialog.close();
+                sap.m.MessageToast.show("Failed to fetch subcomponent data.");
+            });
         },
 
         ScreenRefreshFunction: function () {
@@ -1452,7 +1361,8 @@ sap.ui.define([
 
             var tableListitem = [];
 
-            var aTableData = this.getView().getModel("oDataModel").getProperty("/aTableData");
+            var aTableData = this.flattenData(this.getView().getModel("oDataModel").getProperty("/aTableData"));
+
             var aError = [];
             aTableData.map(function (item1) {
                 var aFilterData = aTableData.filter(item2 => item2.Material === item1.Material);
@@ -1616,43 +1526,74 @@ sap.ui.define([
                                         success: function (data) {
                                             oBusyDialog.close();
                                             let Material = data.d.MaterialDocument;
-                                            var tableData = [{
-                                                MaterialDocument: Material,
-                                                GateEntrynO: GateEntryID,
-                                                Type: "Update",
-                                            }]
-                                            $.ajax({
-                                                type: "POST",
-                                                url: "/sap/bc/http/sap/ZMM_GRN_HTTP?&Type=MaterialDocNo",
-                                                contentType: "application/json",
-                                                data: JSON.stringify({
-                                                    headerData,
-                                                    tableData
-                                                    // MaterialDocument: Material,
-                                                    // GateEntrynO: GateEntryID,
-                                                    // Type : "Update"
+                                            let msgdata = `Material Document ${Material} posted sucessfully for ASN# ${GateEntryID}`;
+                                            sap.m.MessageBox.success(msgdata, {
+                                                actions: [MessageBox.Action.OK], // single button
+                                                emphasizedAction: MessageBox.Action.OK,
+                                                onClose: function (sAction) {
+                                                    if (sAction === MessageBox.Action.OK) {
+                                                        // Copy to clipboard
+                                                        that.getView().setBusy(true);
+                                                        navigator.clipboard.writeText(Material).then(function () {
+                                                            MessageToast.show("Material copied to clipboard!");
+                                                            var tableData = [{
+                                                                MaterialDocument: Material,
+                                                                GateEntrynO: GateEntryID,
+                                                                Type: "Update",
+                                                            }]
+                                                            $.ajax({
+                                                                type: "POST",
+                                                                url: "/sap/bc/http/sap/ZMM_GRN_HTTP?&Type=MaterialDocNo",
+                                                                contentType: "application/json",
+                                                                data: JSON.stringify({
+                                                                    headerData,
+                                                                    tableData
+                                                                    // MaterialDocument: Material,
+                                                                    // GateEntrynO: GateEntryID,
+                                                                    // Type : "Update"
 
-                                                }),
-                                                success: function (response) {
-                                                    console.log("MaterialDocument sent to HTTP service successfully.");
-                                                    MessageBox.success("Material Number: " + Material + " Generated Successfully", {
-                                                        onClose: function (oAction) {
-                                                            if (oAction === MessageBox.Action.OK || oAction === MessageBox.Action.CLOSE || oAction === null) {
+                                                                }),
+                                                                success: function (response) {
+                                                                    that.getView().setBusy(false);
+                                                                    console.log("MaterialDocument sent to HTTP service successfully.");
+                                                                    that.onNavBack();
+                                                                },
+                                                                error: function (oError) {
+                                                                    try {
+                                                                        that.getView().setBusy(false);
+                                                                        var oResponse = JSON.parse(oError.responseText);
+                                                                        if (oResponse && oResponse.error && oResponse.error.message) {
+                                                                            var sMessage = oResponse.error.message.value;
+                                                                            sap.m.MessageToast.show(sMessage);
+                                                                        } else {
+                                                                            sap.m.MessageToast.show("An unexpected error occurred while updating header.");
+                                                                        }
+                                                                    } catch (e) {
+                                                                        that.getView().setBusy(false);
+                                                                        sap.m.MessageToast.show("Error parsing header update response",oResponse);
+                                                                    }
+                                                                    
+                                                                }
+                                                            });
+                                                        }).catch(function (err) {
+                                                            MessageToast.show("Failed to copy Material");
+                                                            console.error(err);
+                                                        });
 
+                                                        // Navigate back
 
-
-                                                                window.history.go(-1);
-                                                            }
-                                                            //    else if(oAction === null){
-                                                            //         window.history.go(-1);
-                                                            //     }
-                                                        }
-                                                    });
+                                                    }
                                                 },
-                                                error: function (xhr, status, error) {
-                                                    console.error("Error sending MaterialDocument to HTTP service: ", error);
-                                                }
                                             });
+
+                                            // Override the default button text via CSS hack if needed:
+                                            setTimeout(function () {
+                                                var $btn = $(".sapMMessageBox .sapMBtn");
+                                                if ($btn.length) {
+                                                    $btn.text("Copy");
+                                                }
+                                            }, 300);
+
                                         }.bind(this),
 
                                         error: function (error) {
@@ -2528,7 +2469,61 @@ sap.ui.define([
                 // refresh model so UI updates
                 oModel.refresh(true);
             }
+        },
+        flattenData: function (aTableData) {
+            let flatData = [];
+
+            aTableData.forEach(parent => {
+                // First, add the parent itself
+                flatData.push({
+                    GateEntryID: parent.GateEntryID,
+                    ItemNo: parent.ItemNo,
+                    Material: parent.Material,
+                    MaterialDesc: parent.MaterialDesc,
+                    MovementType: parent.MovementType,
+                    PONumber: parent.PONumber,
+                    Plant: parent.Plant,
+                    Quantity: parent.Quantity,
+                    StorageLocation: parent.StorageLocation,
+                    UOM: parent.UOM,
+                    Batch: parent.Batch || "",
+                    BatchQty: parent.BatchQty || "",
+                    Entered: parent.Entered,
+                    IsChild: false,  // Parent item flag
+                    purOrderlineItemCat: parent.purOrderlineItemCat,
+                    schAgrlineItemCat: parent.schAgrlineItemCat,
+                    PostedQuantity: parent.PostedQuantity,
+                    children: parent.children.length, // Number of children for parent
+                });
+
+                // Now, iterate over each child and add them
+                parent.children.forEach(child => {
+                    flatData.push({
+                        GateEntryID: child.GateEntryID,
+                        ItemNo: child.ItemNo,
+                        Material: child.Material,
+                        MaterialDesc: child.MaterialDesc,
+                        MovementType: child.MovementType,
+                        PONumber: child.PONumber,
+                        Plant: child.Plant,
+                        Quantity: child.Quantity,
+                        StorageLocation: child.StorageLocation,
+                        UOM: child.UOM,
+                        Batch: child.Batch || "",
+                        BatchQty: child.BatchQty || "",
+                        Entered: child.Entered,
+                        IsChild: true,  // Child item flag
+                        ParentGateEntryID: parent.GateEntryID,  // Reference to the parent
+                        PostedQuantity: child.PostedQuantity || "",  // Handle missing PostedQuantity
+                        purOrderlineItemCat: child.purOrderlineItemCat || "",  // Handle missing property
+                        schAgrlineItemCat: child.schAgrlineItemCat || "",  // Handle missing property
+                    });
+                });
+            });
+
+            return flatData;
         }
+
 
 
     });
